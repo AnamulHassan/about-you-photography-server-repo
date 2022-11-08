@@ -23,11 +23,26 @@ async function run() {
     const sliderDataCollection = client
       .db('aboutYouPhotography')
       .collection('sliderData');
+    const servicesDataCollection = client
+      .db('aboutYouPhotography')
+      .collection('servicesData');
     app.get('/slider', async (req, res) => {
       const query = {};
       const cursor = sliderDataCollection.find(query);
       const slidesData = await cursor.toArray();
       res.send(slidesData);
+    });
+    app.get('/services', async (req, res) => {
+      const serviceLimit = +req.query.limit;
+      const query = {};
+      const cursor = servicesDataCollection.find(query);
+      if (serviceLimit === 3) {
+        const slidesData = await cursor.limit(serviceLimit).toArray();
+        res.send(slidesData);
+      } else {
+        const slidesData = await cursor.toArray();
+        res.send(slidesData);
+      }
     });
   } finally {
   }
