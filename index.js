@@ -29,6 +29,9 @@ async function run() {
     const recentWorkDataCollection = client
       .db('aboutYouPhotography')
       .collection('recentWork');
+    const reviewDataCollection = client
+      .db('aboutYouPhotography')
+      .collection('reviewData');
     app.get('/slider', async (req, res) => {
       const query = {};
       const cursor = sliderDataCollection.find(query);
@@ -49,7 +52,7 @@ async function run() {
     });
     app.get('/services/:serviceId', async (req, res) => {
       const serviceId = req.params.serviceId;
-      console.log(serviceId);
+      // console.log(serviceId);
       const query = { _id: ObjectId(serviceId) };
       const serviceDetails = await servicesDataCollection.findOne(query);
       res.send(serviceDetails);
@@ -59,6 +62,20 @@ async function run() {
       const cursor = recentWorkDataCollection.find(query);
       const recentWorkData = await cursor.toArray();
       res.send(recentWorkData);
+    });
+    app.get('/review_data', async (req, res) => {
+      const categoryName = req.query.category;
+      const query = { category: categoryName };
+      const cursor = reviewDataCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+    app.get('/review_rewrite/:reviewId', async (req, res) => {
+      const reviewId = req.params.reviewId;
+      const query = { _id: ObjectId(reviewId) };
+      const cursor = reviewDataCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
     });
   } finally {
   }
