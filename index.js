@@ -63,21 +63,25 @@ async function run() {
       const recentWorkData = await cursor.toArray();
       res.send(recentWorkData);
     });
-    app.get('/review_data', async (req, res) => {
-      const categoryName = req.query;
+    app.get('/my_review', async (req, res) => {
       const userEmail = req.query.email;
-      console.log(Object.keys(categoryName) === 'category');
-      // let = query;
-      // if (categoryName) {
-      //   query = { category: categoryName };
-      // }
-      // if (email) {
-      //   query = { email: userEmail };
-      // }
-      // console.log(query);
-      // const cursor = reviewDataCollection.find(query);
-      // const reviews = await cursor.toArray();
-      // res.send(reviews);
+      const query = { email: userEmail };
+      const cursor = reviewDataCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+    app.get('/review_data', async (req, res) => {
+      const categoryName = req.query.category;
+      const query = { category: categoryName };
+      const cursor = reviewDataCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+    app.delete('/review_data/:reviewId', async (req, res) => {
+      const id = req.params.reviewId;
+      const query = { _id: ObjectId(id) };
+      const result = await reviewDataCollection.deleteOne(query);
+      res.send(result);
     });
     app.get('/review_rewrite/:reviewId', async (req, res) => {
       const reviewId = req.params.reviewId;
