@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
@@ -10,7 +11,6 @@ app.use(express.json());
 
 // Mongo DB Setup
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.PASSWORD_DB}@cluster0.yts1hwu.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -26,6 +26,9 @@ async function run() {
     const servicesDataCollection = client
       .db('aboutYouPhotography')
       .collection('servicesData');
+    const recentWorkDataCollection = client
+      .db('aboutYouPhotography')
+      .collection('recentWork');
     app.get('/slider', async (req, res) => {
       const query = {};
       const cursor = sliderDataCollection.find(query);
@@ -43,6 +46,19 @@ async function run() {
         const slidesData = await cursor.toArray();
         res.send(slidesData);
       }
+    });
+    app.get('/services/:serviceId', async (req, res) => {
+      const serviceId = req.params.serviceId;
+      console.log(serviceId);
+      const query = { _id: ObjectId(serviceId) };
+      const serviceDetails = await servicesDataCollection.findOne(query);
+      res.send(serviceDetails);
+    });
+    app.get('/recent_work', async (req, res) => {
+      const query = {};
+      const cursor = recentWorkDataCollection.find(query);
+      const recentWorkData = await cursor.toArray();
+      res.send(recentWorkData);
     });
   } finally {
   }
