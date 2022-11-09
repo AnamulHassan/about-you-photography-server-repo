@@ -64,11 +64,20 @@ async function run() {
       res.send(recentWorkData);
     });
     app.get('/review_data', async (req, res) => {
-      const categoryName = req.query.category;
-      const query = { category: categoryName };
-      const cursor = reviewDataCollection.find(query);
-      const reviews = await cursor.toArray();
-      res.send(reviews);
+      const categoryName = req.query;
+      const userEmail = req.query.email;
+      console.log(Object.keys(categoryName) === 'category');
+      // let = query;
+      // if (categoryName) {
+      //   query = { category: categoryName };
+      // }
+      // if (email) {
+      //   query = { email: userEmail };
+      // }
+      // console.log(query);
+      // const cursor = reviewDataCollection.find(query);
+      // const reviews = await cursor.toArray();
+      // res.send(reviews);
     });
     app.get('/review_rewrite/:reviewId', async (req, res) => {
       const reviewId = req.params.reviewId;
@@ -76,6 +85,21 @@ async function run() {
       const cursor = reviewDataCollection.find(query);
       const reviews = await cursor.toArray();
       res.send(reviews);
+    });
+    app.patch('/review_rewrite/:id', async (req, res) => {
+      const id = req.params.id;
+      const newReview = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          img: newReview.photoUrl,
+          name: newReview.name,
+          review: newReview.review,
+          rating: newReview.rating,
+        },
+      };
+      const result = await reviewDataCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
   } finally {
   }
