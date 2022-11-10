@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 const app = express();
 
@@ -18,6 +19,21 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (error, decoded) {
+    if (error) {
+      return res.status(403).send({ message: 'forbidden access' });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const sliderDataCollection = client
@@ -32,6 +48,16 @@ async function run() {
     const reviewDataCollection = client
       .db('aboutYouPhotography')
       .collection('reviewData');
+
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1h',
+      });
+      res.send({ token });
+    });
+
     app.get('/slider', async (req, res) => {
       const query = {};
       const cursor = sliderDataCollection.find(query);
@@ -41,7 +67,7 @@ async function run() {
     app.get('/services', async (req, res) => {
       const serviceLimit = +req.query.limit;
       const query = {};
-      const cursor = servicesDataCollection.find(query);
+      const cursor = servicesDataCollection.find(query).sort({ date: -1 });
       if (serviceLimit === 3) {
         const slidesData = await cursor.limit(serviceLimit).toArray();
         res.send(slidesData);
@@ -52,7 +78,6 @@ async function run() {
     });
     app.get('/services/:serviceId', async (req, res) => {
       const serviceId = req.params.serviceId;
-      // console.log(serviceId);
       const query = { _id: ObjectId(serviceId) };
       const serviceDetails = await servicesDataCollection.findOne(query);
       res.send(serviceDetails);
@@ -70,7 +95,6 @@ async function run() {
     });
     app.post('/add_service', async (req, res) => {
       const service = req.body;
-      // console.log(service);
       const result = await servicesDataCollection.insertOne(service);
       res.send(result);
     });
@@ -80,9 +104,16 @@ async function run() {
       const recentWorkData = await cursor.toArray();
       res.send(recentWorkData);
     });
-    app.get('/my_review', async (req, res) => {
+    app.get('/my_review', verifyJWT, async (req, res) => {
+      const decoded = req.decoded;
       const userEmail = req.query.email;
-      const query = { email: userEmail };
+      if (decoded.email !== userEmail) {
+        res.status(401).send({ message: 'unauthorized access' });
+      }
+      let query = {};
+      if (req.query.email) {
+        query = { email: userEmail };
+      }
       const cursor = reviewDataCollection.find(query).sort({ date: -1 });
       const reviews = await cursor.toArray();
       res.send(reviews);
