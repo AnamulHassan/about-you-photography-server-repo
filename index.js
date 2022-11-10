@@ -57,6 +57,23 @@ async function run() {
       const serviceDetails = await servicesDataCollection.findOne(query);
       res.send(serviceDetails);
     });
+    app.get('/add_review/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const serviceDetails = await servicesDataCollection.findOne(query);
+      res.send(serviceDetails);
+    });
+    app.post('/add_review', async (req, res) => {
+      const review = req.body;
+      const result = await reviewDataCollection.insertOne(review);
+      res.send(result);
+    });
+    app.post('/add_service', async (req, res) => {
+      const service = req.body;
+      // console.log(service);
+      const result = await servicesDataCollection.insertOne(service);
+      res.send(result);
+    });
     app.get('/recent_work', async (req, res) => {
       const query = {};
       const cursor = recentWorkDataCollection.find(query);
@@ -66,14 +83,14 @@ async function run() {
     app.get('/my_review', async (req, res) => {
       const userEmail = req.query.email;
       const query = { email: userEmail };
-      const cursor = reviewDataCollection.find(query);
+      const cursor = reviewDataCollection.find(query).sort({ date: -1 });
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
     app.get('/review_data', async (req, res) => {
       const categoryName = req.query.category;
       const query = { category: categoryName };
-      const cursor = reviewDataCollection.find(query);
+      const cursor = reviewDataCollection.find(query).sort({ date: -1 });
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
